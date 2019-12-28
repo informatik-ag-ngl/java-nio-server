@@ -6,44 +6,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by jjenkov on 21-10-2015.
+ * Project: <strong>java-nio-server</strong><br>
+ * File: <strong>MessageWriter.java</strong><br>
+ * Created: <strong>21 Oct 2015</strong><br>
+ *
+ * @author jjenkov
  */
 public class MessageWriter {
 
-    private List<Message> writeQueue   = new ArrayList<>();
-    private Message  messageInProgress = null;
-    private int      bytesWritten      =    0;
+	private List<Message>	writeQueue	= new ArrayList<>();
+	private Message			messageInProgress;
+	private int				bytesWritten;
 
-    public MessageWriter() {
-    }
+	public void enqueue(Message message) {
+		if (messageInProgress == null) messageInProgress = message;
+		else writeQueue.add(message);
+	}
 
-    public void enqueue(Message message) {
-        if(this.messageInProgress == null){
-            this.messageInProgress = message;
-        } else {
-            this.writeQueue.add(message);
-        }
-    }
+	public void write(Socket socket, ByteBuffer byteBuffer) throws IOException {
+		byteBuffer.put(messageInProgress.sharedArray, messageInProgress.offset + bytesWritten, messageInProgress.length - bytesWritten);
+		byteBuffer.flip();
 
-    public void write(Socket socket, ByteBuffer byteBuffer) throws IOException {
-        byteBuffer.put(this.messageInProgress.sharedArray, this.messageInProgress.offset + this.bytesWritten, this.messageInProgress.length - this.bytesWritten);
-        byteBuffer.flip();
+		bytesWritten += socket.write(byteBuffer);
+		byteBuffer.clear();
 
-        this.bytesWritten += socket.write(byteBuffer);
-        byteBuffer.clear();
+		if (bytesWritten >= messageInProgress.length) {
+			if (writeQueue.size() > 0) messageInProgress = writeQueue.remove(0);
+			else messageInProgress = null;
+			// TODO: unregister from selector
+		}
+	}
 
-        if(bytesWritten >= this.messageInProgress.length){
-            if(this.writeQueue.size() > 0){
-                this.messageInProgress = this.writeQueue.remove(0);
-            } else {
-                this.messageInProgress = null;
-                //todo unregister from selector
-            }
-        }
-    }
-
-    public boolean isEmpty() {
-        return this.writeQueue.isEmpty() && this.messageInProgress == null;
-    }
-
+	public boolean isEmpty() { return writeQueue.isEmpty() && messageInProgress == null; }
 }

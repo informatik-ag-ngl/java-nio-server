@@ -3,44 +3,44 @@ package com.jenkov.nioserver;
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
- * Created by jjenkov on 24-10-2015.
+ * Project: <strong>java-nio-server</strong><br>
+ * File: <strong>Server.java</strong><br>
+ * Created: <strong>24 Oct 2015</strong><br>
+ *
+ * @author jjenkov
  */
 public class Server {
 
-    private SocketAccepter  socketAccepter  = null;
-    private SocketProcessor socketProcessor = null;
+	private SocketAcceptor	socketAccepter;
+	private SocketProcessor	socketProcessor;
 
-    private int tcpPort = 0;
-    private IMessageReaderFactory messageReaderFactory = null;
-    private IMessageProcessor     messageProcessor = null;
+	private int						tcpPort;
+	private IMessageReaderFactory	messageReaderFactory;
+	private IMessageProcessor		messageProcessor;
 
-    public Server(int tcpPort, IMessageReaderFactory messageReaderFactory, IMessageProcessor messageProcessor) {
-        this.tcpPort = tcpPort;
-        this.messageReaderFactory = messageReaderFactory;
-        this.messageProcessor = messageProcessor;
-    }
+	public Server(int tcpPort, IMessageReaderFactory messageReaderFactory, IMessageProcessor messageProcessor) {
+		this.tcpPort				= tcpPort;
+		this.messageReaderFactory	= messageReaderFactory;
+		this.messageProcessor		= messageProcessor;
+	}
 
-    public void start() throws IOException {
+	public void start() throws IOException {
 
-        Queue socketQueue = new ArrayBlockingQueue(1024); //move 1024 to ServerConfig
+		Queue<Socket> socketQueue = new ArrayBlockingQueue<>(1024); // TODO: move 1024 to ServerConfig
 
-        this.socketAccepter  = new SocketAccepter(tcpPort, socketQueue);
+		socketAccepter = new SocketAcceptor(tcpPort, socketQueue);
 
+		MessageBuffer	readBuffer	= new MessageBuffer();
+		MessageBuffer	writeBuffer	= new MessageBuffer();
 
-        MessageBuffer readBuffer  = new MessageBuffer();
-        MessageBuffer writeBuffer = new MessageBuffer();
+		socketProcessor = new SocketProcessor(socketQueue, readBuffer, writeBuffer, this.messageReaderFactory, this.messageProcessor);
 
-        this.socketProcessor = new SocketProcessor(socketQueue, readBuffer, writeBuffer,  this.messageReaderFactory, this.messageProcessor);
+		Thread	accepterThread	= new Thread(socketAccepter);
+		Thread	processorThread	= new Thread(socketProcessor);
 
-        Thread accepterThread  = new Thread(this.socketAccepter);
-        Thread processorThread = new Thread(this.socketProcessor);
-
-        accepterThread.start();
-        processorThread.start();
-    }
-
-
+		accepterThread.start();
+		processorThread.start();
+	}
 }
