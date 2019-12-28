@@ -1,10 +1,13 @@
 package com.jenkov.nioserver;
 
 /**
- * Created by jjenkov on 16-10-2015.
+ * Project: <strong>java-nio-server</strong><br>
+ * File: <strong>HttpUtilTest.java</strong><br>
+ * Created: <strong>16 Oct 2015</strong><br>
+ *
+ * @author jjenkov
  */
 public interface IMessageReaderFactory {
 
-    public IMessageReader createMessageReader();
-
+	public IMessageReader createMessageReader();
 }
