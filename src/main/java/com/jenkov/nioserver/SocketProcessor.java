@@ -51,6 +51,8 @@ public class SocketProcessor implements Runnable {
 	private Set<Socket>	emptyToNonEmptySockets	= new HashSet<>();
 	private Set<Socket>	nonEmptyToEmptySockets	= new HashSet<>();
 
+	private Set<ISocketIdListener> socketIdListeners = new HashSet<>();
+
 	public SocketProcessor(Queue<Socket> inboundSocketQueue, MessageBuffer readMessageBuffer, MessageBuffer writeMessageBuffer,
 			IMessageReaderFactory messageReaderFactory, IMessageProcessor messageProcessor) throws IOException {
 		this.inboundSocketQueue = inboundSocketQueue;
@@ -97,6 +99,7 @@ public class SocketProcessor implements Runnable {
 			newSocket.messageWriter = new MessageWriter();
 
 			socketMap.put(newSocket.socketId, newSocket);
+			socketIdListeners.forEach(l -> l.socketRegistered(nextSocketId - 1));
 
 			SelectionKey key = newSocket.socketChannel.register(readSelector, SelectionKey.OP_READ);
 			key.attach(newSocket);
@@ -121,6 +124,10 @@ public class SocketProcessor implements Runnable {
 		}
 	}
 
+	public void registerSocketIdListener(ISocketIdListener listener) {
+		socketIdListeners.add(listener);
+	}
+
 	private void readFromSocket(SelectionKey key) throws IOException {
 		Socket socket = (Socket) key.attachment();
 		socket.messageReader.read(socket, this.readByteBuffer);
@@ -138,6 +145,7 @@ public class SocketProcessor implements Runnable {
 		if (socket.endOfStreamReached) {
 			System.out.println("Socket closed: " + socket.socketId);
 			socketMap.remove(socket.socketId);
+			socketIdListeners.forEach(l -> l.socketCancelled(socket.socketId));
 			key.attach(null);
 			key.cancel();
 			key.channel().close();
