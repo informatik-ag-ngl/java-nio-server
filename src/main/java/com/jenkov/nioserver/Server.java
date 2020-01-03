@@ -13,7 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class Server {
 
-	private SocketAcceptor	socketAccepter;
+	private SocketAcceptor	socketAcceptor;
 	private SocketProcessor	socketProcessor;
 
 	private int						tcpPort;
@@ -30,17 +30,21 @@ public class Server {
 
 		Queue<Socket> socketQueue = new ArrayBlockingQueue<>(1024); // TODO: move 1024 to ServerConfig
 
-		socketAccepter = new SocketAcceptor(tcpPort, socketQueue);
+		socketAcceptor = new SocketAcceptor(tcpPort, socketQueue);
 
 		MessageBuffer	readBuffer	= new MessageBuffer();
 		MessageBuffer	writeBuffer	= new MessageBuffer();
 
 		socketProcessor = new SocketProcessor(socketQueue, readBuffer, writeBuffer, this.messageReaderFactory, this.messageProcessor);
 
-		Thread	accepterThread	= new Thread(socketAccepter);
+		Thread	accepterThread	= new Thread(socketAcceptor);
 		Thread	processorThread	= new Thread(socketProcessor);
 
 		accepterThread.start();
 		processorThread.start();
 	}
+
+	public SocketAcceptor getSocketAcceptor() { return socketAcceptor; }
+
+	public SocketProcessor getSocketProcessor() { return socketProcessor; }
 }
