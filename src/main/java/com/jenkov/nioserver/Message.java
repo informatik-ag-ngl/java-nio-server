@@ -68,7 +68,7 @@ public class Message {
 			if (!this.messageBuffer.expandMessage(this)) return -1;
 
 		int bytesToCopy = Math.min(remaining, capacity - length);
-		System.arraycopy(byteArray, offset, sharedArray, offset + this.length, bytesToCopy);
+		System.arraycopy(byteArray, offset, sharedArray, this.offset + this.length, bytesToCopy);
 		this.length += bytesToCopy;
 		return bytesToCopy;
 	}

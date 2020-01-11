@@ -19,8 +19,10 @@ public class MessageWriter {
 	private int				bytesWritten;
 
 	public void enqueue(Message message) {
-		if (messageInProgress == null) messageInProgress = message;
-		else writeQueue.add(message);
+		if (messageInProgress == null) {
+			messageInProgress	= message;
+			bytesWritten		= 0;
+		} else writeQueue.add(message);
 	}
 
 	public void write(Socket socket, ByteBuffer byteBuffer) throws IOException {
@@ -31,8 +33,10 @@ public class MessageWriter {
 		byteBuffer.clear();
 
 		if (bytesWritten >= messageInProgress.length) {
-			if (writeQueue.size() > 0) messageInProgress = writeQueue.remove(0);
-			else messageInProgress = null;
+			if (writeQueue.size() > 0) {
+				messageInProgress	= writeQueue.remove(0);
+				bytesWritten		= 0;
+			} else messageInProgress = null;
 			// TODO: unregister from selector
 		}
 	}
