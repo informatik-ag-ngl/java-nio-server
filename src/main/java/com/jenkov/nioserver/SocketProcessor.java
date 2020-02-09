@@ -140,6 +140,8 @@ public class SocketProcessor implements Runnable {
 				fullMessages.clear();
 			}
 		} catch (IOException e) {
+			e.printStackTrace();
+			System.err.println("An exception occurred while reading from a socket. Cancelling socket...");
 			cancelled = true;
 		} finally {
 			if (cancelled || socket.endOfStreamReached) {
